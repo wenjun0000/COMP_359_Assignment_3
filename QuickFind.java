@@ -1,76 +1,59 @@
-package UF;
-
-	// Based on: https://regenerativetoday.com/union-find-data-structure-quick-find-algorithm/
+package uf;
 
 public class QuickFind {
-    private int count; // number of connected components
-    int[] parents; // stores tree structure
+    private int[] parent; // Parent array representing the connected components
+    private boolean[][] allowedConnections; // Matrix of allowed connections
 
-    public QuickFind(int n) {
-        count = n;
-        parents = new int[n];
+    // Constructor to initialize QuickFind data structure
+    public QuickFind(int n, boolean[][] connections) {
+        parent = new int[n];
         for (int i = 0; i < n; i++) {
-            parents[i] = i; // O(n): initializing the array
+            parent[i] = i; // Each node starts as its own root
+        }
+        this.allowedConnections = connections; // Set allowed connections
+    }
+
+    // Path compression for finding the root of a node
+    public int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // Recursively compress path
+        }
+        return parent[x];
+    }
+
+    // Union operation to merge two components
+    public boolean union(int x, int y) {
+        if (!allowedConnections[x][y]) {
+            return false; // Return false if the connection is not allowed
+        }
+
+        int rootX = find(x); // Find root of x
+        int rootY = find(y); // Find root of y
+
+        if (rootX != rootY) {
+            parent[rootY] = rootX; // Merge sets by pointing y's root to x's root
+        }
+        return true;
+    }
+
+    // Reset all nodes to their original state
+    public void clear() {
+        for (int i = 0; i < parent.length; i++) {
+            parent[i] = i;
         }
     }
 
-    // Returns the number of connected components
-    public int count() {
-        return count;
-    }
-
-    // Find method - O(1) (constant time)
-    public int find(int p) {
-        return parents[p];
-    }
-
-    // Union method - O(n) (linear time)
-    public void union(int p, int q) {
-        int rootP = find(p);
-        int rootQ = find(q);
-
-        if (rootP == rootQ) return;
-
-        for (int i = 0; i < parents.length; i++) {
-            if (parents[i] == rootQ) {
-                parents[i] = rootP;
-            }
+    // Get a copy of the parent array
+    public int[] getParents() {
+        // Apply path compression for consistency
+        for (int i = 0; i < parent.length; i++) {
+            find(i); // Ensure all nodes point to the correct root
         }
-        count--;
+        return parent.clone();
     }
 
-    // Checks if two nodes are in the same component - O(1)
-    public boolean connected(int p, int q) {
-        return find(p) == find(q);
-    }
-
-    // Shuffle method - O(n^2) (quadratic time)
-    public void shuffle() {
-        int j;
-        for (int i = 0; i < parents.length - 1; i++) {
-            j = (int) (Math.random() * (parents.length - i) + i);
-            union(i, j);
-        }
-    }
-
-    // Print the current state of the parents array - O(n)
-    public void print() {
-        System.out.print("{ ");
-        for (int i = 0; i < parents.length; i++) {
-            System.out.print(parents[i] + " ");
-        }
-        System.out.println("}");
-    }
-
-    // Print all connected nodes
-    public void printAllConnections() {
-        System.out.println("All connected nodes:");
-        for (int i = 0; i < parents.length; i++) {
-            for (int j = i + 1; j < parents.length; j++) {
-                if (connected(i, j)) {
-                    System.out.println(i + " is connected to " + j);
-                }
-            }
-        }
+    // Return the allowed connections matrix
+    public boolean[][] getAllowedConnections() {
+        return allowedConnections;
     }
 }
