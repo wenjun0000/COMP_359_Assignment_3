@@ -3,6 +3,7 @@ package uf;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.lang.reflect.Field;
 
 @SuppressWarnings("serial")
 public class QuickFindVisualizer extends JPanel {
@@ -75,24 +76,62 @@ public class QuickFindVisualizer extends JPanel {
             g2d.drawLine(p1.x, p1.y, p2.x, p2.y);
         }
 
-        // Draw nodes with highlights and labels
+        // Draw nodes as yellow balls with dynamic labels
         for (Map.Entry<Integer, Point> entry : nodeLocations.entrySet()) {
             int node = entry.getKey();
             Point location = entry.getValue();
 
-            // Draw node with green highlight if selected
-            if (highlightedNodes.contains(node)) {
-                g2d.setColor(Color.GREEN);
-            } else {
-                g2d.setColor(Color.ORANGE);
-            }
+            // Draw node as a yellow ball
+            g2d.setColor(Color.YELLOW);
             g2d.fillOval(location.x - 20, location.y - 20, 40, 40);
 
-            // Draw border and label
+            // Highlight parent node in green
+            if (highlightedNodes.contains(node)) {
+                g2d.setColor(Color.GREEN);
+                g2d.fillOval(location.x - 20, location.y - 20, 40, 40);
+            }
+
+            // Draw border around the ball
             g2d.setColor(Color.BLACK);
             g2d.drawOval(location.x - 20, location.y - 20, 40, 40);
-            g2d.drawString(node + " (" + quickFind.find(node) + ")", location.x - 30, location.y + 30);
+
+            // Draw the node number in the center of the ball
+            g2d.setColor(Color.BLACK);
+            g2d.setFont(new Font("Arial", Font.BOLD, 16));
+            String text = String.valueOf(node);
+            FontMetrics fm = g2d.getFontMetrics();
+            int textWidth = fm.stringWidth(text);
+            int textHeight = fm.getAscent();
+            g2d.drawString(text, location.x - textWidth / 2, location.y + textHeight / 4);
+
+            // Display dynamic label under the node
+            String label = getNodeLabel(node);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+            g2d.drawString(label, location.x - 40, location.y + 40);
         }
+    }
+
+    // Get the label for a node based on the selected strategy
+    private String getNodeLabel(int node) {
+        try {
+            QuickFind.UnionStrategy strategy = quickFind.getStrategy();
+            int root = quickFind.find(node);
+
+            if (strategy == QuickFind.UnionStrategy.PATH_COMPRESSION_RANK) {
+                Field rankField = quickFind.getClass().getDeclaredField("rank");
+                rankField.setAccessible(true);
+                int[] rank = (int[]) rankField.get(quickFind);
+                return "[r=" + rank[node] + ", root=" + root + "]";
+            } else if (strategy == QuickFind.UnionStrategy.PATH_COMPRESSION_SIZE) {
+                Field sizeField = quickFind.getClass().getDeclaredField("size");
+                sizeField.setAccessible(true);
+                int[] size = (int[]) sizeField.get(quickFind);
+                return "[s=" + size[node] + ", root=" + root + "]";
+            }
+        } catch (Exception e) {
+            return "[root=" + quickFind.find(node) + "]";
+        }
+        return "[root=" + quickFind.find(node) + "]";
     }
 
     // Highlight the path from a node to its root

@@ -4,6 +4,6 @@
 /**
  * 
  */
-module UnionFindAssignmentIII {
+module UnionFindIII {
 	requires java.desktop;
 }

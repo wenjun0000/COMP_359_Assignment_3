@@ -30,7 +30,7 @@ public class App {
         JFrame frame = new JFrame("QuickFind Visualization");
         QuickFindVisualizer visualizer = new QuickFindVisualizer(quickFind);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 700);
+        frame.setSize(1200, 700);
         frame.setLayout(new BorderLayout());
 
         // Create a control panel for user interaction
@@ -46,7 +46,14 @@ public class App {
         JButton findButton = new JButton("Find"); // Button to perform find operation
         JButton clearButton = new JButton("Clear"); // Button to reset the data structure
 
+        // Add strategy selection dropdown
+        JComboBox<QuickFind.UnionStrategy> strategyComboBox = new JComboBox<>(QuickFind.UnionStrategy.values());
+        strategyComboBox.setSelectedItem(QuickFind.UnionStrategy.PATH_COMPRESSION_RANK);
+        JLabel strategyLabel = new JLabel("Union Strategy:");
+
         // Add input fields and buttons to the control panel
+        controlPanel.add(strategyLabel);
+        controlPanel.add(strategyComboBox);
         controlPanel.add(new JLabel("Node 1:"));
         controlPanel.add(node1Field);
         controlPanel.add(new JLabel("Node 2:"));
@@ -71,6 +78,14 @@ public class App {
         // Display the initial state of the parent array
         logArea.append("Initial Parent Nodes:\n");
         logArea.append(formatParentArray(quickFind.getParents()) + "\n");
+
+        // Add strategy selection listener
+        strategyComboBox.addActionListener(e -> {
+            QuickFind.UnionStrategy selectedStrategy = 
+                (QuickFind.UnionStrategy) strategyComboBox.getSelectedItem();
+            quickFind.setStrategy(selectedStrategy);
+            logArea.append("Strategy changed to: " + selectedStrategy + "\n");
+        });
 
         // Define action for the Union button
         unionButton.addActionListener(e -> {
@@ -131,4 +146,28 @@ public class App {
         }
         return sb.toString();
     }
+    
+    // Debugging and Testing QuickFind Implementation
+    private static void runTests(QuickFind quickFind) {
+        System.out.println("Running tests on QuickFind...");
+
+        // Test Union operation
+        assert quickFind.union(0, 1) : "Union(0, 1) should succeed.";
+        assert quickFind.union(1, 2) : "Union(1, 2) should succeed.";
+        assert !quickFind.union(3, 4) : "Union(3, 4) should fail (not allowed).";
+
+        // Test Find operation
+        assert quickFind.find(0) == quickFind.find(2) : "0 and 2 should have the same root.";
+        assert quickFind.find(3) != quickFind.find(4) : "3 and 4 should not be connected.";
+
+        // Test Path Compression
+        int[] parentsBefore = quickFind.getParents();
+        quickFind.find(2); // Trigger path compression
+        int[] parentsAfter = quickFind.getParents();
+        assert parentsBefore != parentsAfter : "Parents array should change after path compression.";
+
+        System.out.println("All tests passed!");
+    }
 }
+
+
